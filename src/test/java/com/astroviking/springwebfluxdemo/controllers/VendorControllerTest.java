@@ -7,12 +7,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.reactivestreams.Publisher;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import static com.astroviking.springwebfluxdemo.controllers.VendorController.BASE_URL;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(SpringExtension.class)
@@ -42,5 +44,38 @@ class VendorControllerTest {
     given(vendorRepository.findById(ID)).willReturn(Mono.just(new Vendor()));
 
     webTestClient.get().uri(BASE_URL + "/" + ID).exchange().expectBody(Vendor.class);
+  }
+
+  @Test
+  void testCreate() {
+    given(vendorRepository.saveAll(any(Publisher.class)))
+        .willReturn(Flux.just(Vendor.builder().build()));
+
+    Mono<Vendor> vendorMono =
+        Mono.just(Vendor.builder().firstName("Jim").lastName("Jones").build());
+
+    webTestClient
+        .post()
+        .uri(BASE_URL)
+        .body(vendorMono, Vendor.class)
+        .exchange()
+        .expectStatus()
+        .isCreated();
+  }
+
+  @Test
+  void testUpdate() {
+    given(vendorRepository.save(any(Vendor.class))).willReturn(Mono.just(Vendor.builder().build()));
+
+    Mono<Vendor> vendorMono =
+        Mono.just(Vendor.builder().firstName("Jim").lastName("Jones").build());
+
+    webTestClient
+        .put()
+        .uri(BASE_URL + "/" + ID)
+        .body(vendorMono, Vendor.class)
+        .exchange()
+        .expectStatus()
+        .isAccepted();
   }
 }
