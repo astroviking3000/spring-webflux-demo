@@ -15,7 +15,9 @@ import reactor.core.publisher.Mono;
 
 import static com.astroviking.springwebfluxdemo.controllers.VendorController.BASE_URL;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
 class VendorControllerTest {
@@ -77,5 +79,46 @@ class VendorControllerTest {
         .exchange()
         .expectStatus()
         .isAccepted();
+  }
+
+  @Test
+  void testPatch() {
+    given(vendorRepository.findById(anyString())).willReturn(Mono.just(Vendor.builder().build()));
+    given(vendorRepository.save(any(Vendor.class)))
+        .willReturn(Mono.just(Vendor.builder().firstName("Jim").build()));
+
+    Mono<Vendor> vendorMono = Mono.just(Vendor.builder().firstName("Bob").build());
+
+    webTestClient
+        .patch()
+        .uri(BASE_URL + "/" + ID)
+        .body(vendorMono, Vendor.class)
+        .exchange()
+        .expectStatus()
+        .isAccepted();
+
+    verify(vendorRepository, times(1)).findById(ID);
+    verify(vendorRepository, times(1)).save(any(Vendor.class));
+  }
+
+  @Test
+  void testPatchNoUpdate() {
+    given(vendorRepository.findById(anyString()))
+        .willReturn(Mono.just(Vendor.builder().firstName("Jim").build()));
+    given(vendorRepository.save(any(Vendor.class)))
+        .willReturn(Mono.just(Vendor.builder().firstName("Jim").build()));
+
+    Mono<Vendor> vendorMono = Mono.just(Vendor.builder().firstName("Jim").build());
+
+    webTestClient
+        .patch()
+        .uri(BASE_URL + "/" + ID)
+        .body(vendorMono, Vendor.class)
+        .exchange()
+        .expectStatus()
+        .isAccepted();
+
+    verify(vendorRepository, times(1)).findById(ID);
+    verify(vendorRepository, never()).save(any(Vendor.class));
   }
 }

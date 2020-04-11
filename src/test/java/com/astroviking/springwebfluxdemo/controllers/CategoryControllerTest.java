@@ -16,6 +16,8 @@ import reactor.core.publisher.Mono;
 import static com.astroviking.springwebfluxdemo.controllers.CategoryController.BASE_URL;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(SpringExtension.class)
 class CategoryControllerTest {
@@ -81,5 +83,24 @@ class CategoryControllerTest {
         .exchange()
         .expectStatus()
         .isAccepted();
+  }
+
+  @Test
+  void testPatch() {
+    given(categoryRepository.findById(ID)).willReturn(Mono.just(Category.builder().build()));
+    given(categoryRepository.save(any(Category.class)))
+        .willReturn(Mono.just(Category.builder().build()));
+
+    Mono<Category> categoryMono = Mono.just(Category.builder().description(DESCRIPTION).build());
+
+    webTestClient
+        .patch()
+        .uri(BASE_URL + "/" + ID)
+        .body(categoryMono, Category.class)
+        .exchange()
+        .expectStatus()
+        .isAccepted();
+
+    verify(categoryRepository, times(1)).save(any(Category.class));
   }
 }
