@@ -83,9 +83,10 @@ class VendorControllerTest {
 
   @Test
   void testPatch() {
-    given(vendorRepository.findById(anyString())).willReturn(Mono.just(Vendor.builder().build()));
-    given(vendorRepository.save(any(Vendor.class)))
+    given(vendorRepository.findById(anyString()))
         .willReturn(Mono.just(Vendor.builder().firstName("Jim").build()));
+    given(vendorRepository.save(any(Vendor.class)))
+        .willReturn(Mono.just(Vendor.builder().firstName("Bob").build()));
 
     Mono<Vendor> vendorMono = Mono.just(Vendor.builder().firstName("Bob").build());
 
